@@ -1,25 +1,40 @@
 -module(custom_set).
 
--export([add/2, contains/2, difference/2, disjoint/2, empty/1, equal/2, from_list/1, intersection/2, subset/2,
-	 union/2]).
+-record(set, {bits}).
 
+-export([add/2, contains/2, difference/2, disjoint/2, empty/1, equal/2, from_list/1,
+         intersection/2, subset/2, union/2, to_bit/1]).
 
-add(_Elem, _Set) -> undefined.
+add(Elem, #set{bits = Bits}) ->
+  #set{bits = Bits bor to_bit(Elem)}.
 
-contains(_Elem, _Set) -> undefined.
+to_bit(Elem) when is_integer(Elem) and (Elem >= 0) ->
+  trunc(math:pow(2, Elem)).
 
-difference(_Set1, _Set2) -> undefined.
+contains(Elem, #set{bits = Bits}) ->
+  Bits band to_bit(Elem) > 0.
 
-disjoint(_Set1, _Set2) -> undefined.
+difference(#set{bits = Bits1}, #set{bits = Bits2}) ->
+  #set{bits = Bits1 band (Bits1 bxor Bits2)}.
 
-empty(_Set) -> undefined.
+disjoint(Set1, Set2) ->
+  empty(intersection(Set1, Set2)).
 
-equal(_Set1, _Set2) -> undefined.
+empty(#set{bits = Bits}) ->
+  Bits == 0.
 
-from_list(_List) -> undefined.
+equal(#set{bits = Bits1}, #set{bits = Bits2}) ->
+  Bits1 == Bits2.
 
-intersection(_Set1, _Set2) -> undefined.
+from_list(List) ->
+  Elems = lists:map(fun(Elem) -> to_bit(Elem) end, List),
+  #set{bits = lists:foldl(fun(Elem, Acc) -> Acc bor Elem end, 0, Elems)}.
 
-subset(_Set1, _Set2) -> undefined.
+intersection(#set{bits = Bits1}, #set{bits = Bits2}) ->
+  #set{bits = Bits1 band Bits2}.
 
-union(_Set1, _Set2) -> undefined.
+subset(Set1, Set2) ->
+  equal(Set1, intersection(Set1, Set2)).
+
+union(#set{bits = Bits1}, #set{bits = Bits2}) ->
+  #set{bits = Bits1 bor Bits2}.
